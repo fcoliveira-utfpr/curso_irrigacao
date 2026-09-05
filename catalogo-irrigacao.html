@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IrrigaTec Escola - Catálogo Didático de Peças de Irrigação</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- jsPDF + AutoTable (geração de PDF do orçamento) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS (geração de planilha Excel .xlsx do orçamento) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #16a34a; border-radius: 4px; }
+    .product-photo { background: #f8fafc; }
+    .product-photo img { mix-blend-mode: multiply; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased flex flex-col min-h-screen">
+
+  <!-- AVISO DIDÁTICO -->
+  <div class="bg-amber-400 text-amber-950 text-xs sm:text-sm text-center py-1.5 px-4 font-medium">
+    <i class="fa-solid fa-graduation-cap mr-1"></i>
+    Material 100% didático para uso em sala de aula — preços são estimativas aproximadas de mercado, sem relação comercial real.
+  </div>
+
+  <!-- HEADER -->
+  <header class="bg-brand-800 text-white sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="resetFilters()">
+        <div class="bg-brand-500 text-white p-2.5 rounded-xl shadow">
+          <i class="fa-solid fa-droplet text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight flex items-center gap-2">
+            IrrigaTec Escola <span class="bg-brand-600 text-xs px-2 py-0.5 rounded-full text-brand-100 font-normal">Catálogo</span>
+          </h1>
+          <p class="text-xs text-brand-200 hidden sm:block">Peças de irrigação por gotejamento e microaspersão</p>
+        </div>
+      </div>
+
+      <!-- BUSCA E CARRINHO / ORÇAMENTO -->
+      <div class="flex items-center gap-3">
+        <button onclick="toggleCartModal()" class="relative bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 text-sm shadow-sm">
+          <i class="fa-solid fa-list-check text-brand-300"></i>
+          <span class="hidden sm:inline">Meu Orçamento</span>
+          <span id="cart-badge" class="bg-amber-400 text-slate-900 font-bold text-xs px-2 py-0.5 rounded-full">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="bg-gradient-to-b from-brand-800 to-brand-900 text-white py-8 px-4 border-b border-brand-700">
+    <div class="max-w-7xl mx-auto text-center">
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-2">125 Peças de Sistemas de Irrigação</h2>
+      <p class="text-brand-200 text-sm sm:text-base max-w-2xl mx-auto mb-6">
+        Explore mangueiras gotejadoras, microaspersores, aspersores de impacto, tubos e conexões de linha fixa e portátil, válvulas e equipamentos de aferição. Selecione a variação desejada para atualizar o preço estimado e monte seu orçamento de estudo.
+      </p>
+
+      <!-- BARRA DE BUSCA E FILTROS -->
+      <div class="max-w-3xl mx-auto bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+          <input type="text" id="search-input" onkeyup="filterProducts()" placeholder="Buscar por mangueira, microaspersor, aspersor, tubo, conexão, válvula..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 text-sm">
+        </div>
+        <select id="category-filter" onchange="filterProducts()" class="bg-slate-100 text-slate-700 text-sm font-medium px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="all">Todas as Categorias (125)</option>
+          <option value="Mangueiras Gotejadoras">Mangueiras Gotejadoras (4)</option>
+          <option value="Mangueira de Polietileno">Mangueira de Polietileno (1)</option>
+          <option value="Microaspersores">Microaspersores (3)</option>
+          <option value="Acessórios para Microaspersão">Acessórios para Microaspersão (3)</option>
+          <option value="Equipamentos de Aferição">Equipamentos de Aferição (4)</option>
+          <option value="Conexões">Conexões (12)</option>
+          <option value="Válvulas, Filtros e Instalação">Válvulas, Filtros e Instalação (3)</option>
+          <option value="Injetores">Injetores (1)</option>
+          <option value="Aspersores TIGRE">Aspersores TIGRE (6)</option>
+          <option value="Acessórios para Aspersão">Acessórios para Aspersão (7)</option>
+          <option value="Linha SempreVerde">Linha SempreVerde (2)</option>
+          <option value="Tubos e Conexões Irriga LF">Tubos e Conexões Irriga LF (23)</option>
+          <option value="Linha Portátil Irriga EP">Linha Portátil Irriga EP (17)</option>
+          <option value="Linha Portátil Irriga ES">Linha Portátil Irriga ES (14)</option>
+          <option value="Linha Portátil Irriga EP/ES">Linha Portátil Irriga EP/ES (3)</option>
+          <option value="Aspersores Agropolo">Aspersores Agropolo (3)</option>
+          <option value="Registros e Válvulas para Bombas">Registros e Válvulas para Bombas (9)</option>
+          <option value="Motobombas Centrífugas Monoestágio (Rotor Fechado)">Motobombas Monoestágio Rotor Fechado (7)</option>
+          <option value="Motobombas Centrífugas Monoestágio (Rotor Semiaberto)">Motobombas Monoestágio Rotor Semiaberto (2)</option>
+          <option value="Motobombas Centrífugas de Aço Inox (Rotor Semiaberto)">Motobombas de Aço Inox (1)</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- LISTA DE PRODUTOS -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+
+    <!-- BARRA DE GERENCIAMENTO DE PREÇOS (CSV) -->
+    <div class="bg-white border border-slate-200 rounded-xl p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="text-xs text-slate-500 flex items-center gap-2">
+        <i class="fa-solid fa-file-csv text-brand-600 text-base"></i>
+        <span>Preços editáveis via planilha CSV <span id="csv-status" class="font-semibold text-slate-600"></span></span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="downloadPriceCSV()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+          <i class="fa-solid fa-download"></i> Baixar CSV de preços
+        </button>
+        <label class="bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-upload"></i> Carregar CSV editado
+          <input type="file" accept=".csv" onchange="handleCsvFileInput(event)" class="hidden">
+        </label>
+        <button onclick="restoreDefaultPrices()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-left"></i> Restaurar padrão
+        </button>
+      </div>
+    </div>
+
+    <!-- BARRA DE CONTAGEM E ORDENAÇÃO -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3 border-b border-slate-200 pb-4">
+      <p class="text-slate-600 text-sm font-medium">
+        Exibindo <span id="products-count" class="font-bold text-brand-700">125</span> peças cadastradas
+      </p>
+      <div class="flex items-center gap-2">
+        <label for="sort-select" class="text-xs text-slate-500 font-medium">Ordenar por:</label>
+        <select id="sort-select" onchange="filterProducts()" class="bg-white border border-slate-300 text-slate-700 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="default">Padrão</option>
+          <option value="price-asc">Menor Preço</option>
+          <option value="price-desc">Maior Preço</option>
+          <option value="name-asc">Nome (A-Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- GRID DE PRODUTOS -->
+    <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Injetado dinamicamente via JS -->
+    </div>
+
+    <!-- MENSAGEM NENHUM ENCONTRADO -->
+    <div id="no-results" class="hidden text-center py-16">
+      <i class="fa-solid fa-box-open text-5xl text-slate-300 mb-4"></i>
+      <h3 class="text-lg font-bold text-slate-700">Nenhuma peça encontrada</h3>
+      <p class="text-slate-500 text-sm mt-1">Tente ajustar a busca ou filtro de categoria.</p>
+      <button onclick="resetFilters()" class="mt-4 bg-brand-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-brand-700 transition">Limpar Filtros</button>
+    </div>
+  </main>
+
+  <!-- MODAL DE DETALHES DA PEÇA -->
+  <div id="product-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh] animate-fade-in">
+
+      <!-- Cabeçalho Modal -->
+      <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+        <div>
+          <span id="modal-category" class="text-xs font-semibold uppercase tracking-wider text-brand-700 bg-brand-100 px-2.5 py-0.5 rounded-full"></span>
+          <h3 id="modal-title" class="text-xl font-bold text-slate-800 mt-1"></h3>
+        </div>
+        <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Conteúdo Modal -->
+      <div class="p-6 overflow-y-auto custom-scroll space-y-6">
+        <div class="flex flex-col md:flex-row gap-6 items-center">
+          <!-- Imagem -->
+          <div class="w-full md:w-1/2 h-56 product-photo rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center p-4">
+            <img id="modal-image" src="" alt="" class="max-h-full max-w-full object-contain drop-shadow">
+          </div>
+
+          <!-- Informações de Variação e Preço -->
+          <div class="w-full md:w-1/2 flex flex-col justify-between">
+            <div>
+              <p class="text-xs text-slate-500 font-medium">Selecione a variação:</p>
+              <div id="modal-diameters" class="flex flex-wrap gap-2 mt-2 max-h-32 overflow-y-auto custom-scroll">
+                <!-- Botões de variação injetados via JS -->
+              </div>
+
+              <div class="mt-6 bg-brand-50 p-4 rounded-xl border border-brand-200">
+                <span class="text-xs text-brand-800 font-semibold uppercase tracking-wider block">Preço Aproximado Estimado</span>
+                <div class="flex items-baseline gap-1 mt-1">
+                  <span id="modal-price" class="text-3xl font-extrabold text-brand-700">R$ 0,00</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">
+                  <i class="fa-solid fa-circle-info text-brand-600 mr-1"></i>Preço médio estimado para fins de estudo.
+                </p>
+              </div>
+            </div>
+
+            <button id="modal-add-btn" onclick="" class="mt-6 w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow flex items-center justify-center gap-2 text-sm">
+              <i class="fa-solid fa-plus"></i> Adicionar ao Orçamento
+            </button>
+          </div>
+        </div>
+
+        <!-- Descrição e Especificações -->
+        <div class="border-t border-slate-200 pt-4">
+          <h4 class="font-bold text-slate-800 text-sm mb-2">Descrição & Aplicação</h4>
+          <p id="modal-description" class="text-slate-600 text-sm leading-relaxed"></p>
+
+          <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block font-medium">Material Principal</span>
+              <span id="modal-material" class="font-semibold text-slate-700"></span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block font-medium">Pressão de Trabalho</span>
+              <span id="modal-pressure" class="font-semibold text-slate-700"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER / MODAL DE ORÇAMENTO -->
+  <div id="cart-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex justify-end hidden">
+    <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col animate-slide-left">
+      <div class="bg-brand-800 text-white p-4 flex justify-between items-center">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+          <i class="fa-solid fa-list-check"></i> Meu Orçamento de Peças
+        </h3>
+        <button onclick="toggleCartModal()" class="text-brand-200 hover:text-white text-xl p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="cart-items-container" class="p-4 flex-1 overflow-y-auto custom-scroll space-y-3">
+        <!-- Itens do orçamento injetados via JS -->
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-3">
+        <div class="flex justify-between items-center text-slate-700 font-bold text-lg">
+          <span>Total Estimado:</span>
+          <span id="cart-total" class="text-brand-700">R$ 0,00</span>
+        </div>
+        <p class="text-[11px] text-slate-500 text-center">Simulação de estudo — os preços são aproximações e não constituem cotação real.</p>
+        <div class="flex gap-2">
+          <button onclick="clearCart()" class="w-1/3 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold py-2.5 rounded-lg transition">Limpar</button>
+          <div class="relative w-2/3">
+            <button onclick="toggleExportMenu()" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-file-export"></i> Exportar Orçamento <i class="fa-solid fa-chevron-up text-[10px]"></i>
+            </button>
+            <div id="export-menu" class="hidden absolute bottom-full mb-2 left-0 w-full bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden z-10">
+              <button onclick="generatePDF(); toggleExportMenu()" class="w-full text-left px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf text-red-500"></i> Baixar PDF
+              </button>
+              <button onclick="generateXLS(); toggleExportMenu()" class="w-full text-left px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2 border-t border-slate-100">
+                <i class="fa-solid fa-file-excel text-green-600"></i> Baixar Excel (XLS)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICAÇÃO TOAST -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white text-sm px-4 py-3 rounded-xl shadow-xl z-50 flex items-center gap-3 transition-opacity duration-300 opacity-0 pointer-events-none">
+    <i class="fa-solid fa-circle-check text-brand-400 text-lg"></i>
+    <span id="toast-message">Item adicionado com sucesso!</span>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-800 text-slate-400 py-6 text-center text-xs border-t border-slate-700">
+    <div class="max-w-7xl mx-auto px-4">
+      <p class="mb-1">IrrigaTec Escola &copy; 2026 - Catálogo interativo criado para fins didáticos sobre componentes de irrigação localizada.</p>
+      <p class="text-slate-500">Nomes de produtos e imagens inspirados em um catálogo real de fabricante nacional de mangueiras gotejadoras; preços são estimativas de mercado geradas para exercício de sala de aula.</p>
+    </div>
+  </footer>
+
+  <!-- DADOS DO CATÁLOGO — cada fonte/catálogo fica em seu próprio arquivo em data/,               -->
+  <!-- carregado via <script src>, o que funciona mesmo abrindo este HTML direto (sem servidor).    -->
+  <script src="data/helpers.js"></script>
+  <script src="data/produtos-agroirriga.js"></script>
+  <script src="data/produtos-tigre-aspersao.js"></script>
+  <script src="data/produtos-tigre-irriga-lf.js"></script>
+  <script src="data/produtos-tigre-irriga-ep-es.js"></script>
+  <script src="data/produtos-agropolo.js"></script>
+  <script src="data/produtos-tigre-predial-bombas.js"></script>
+  <script src="data/produtos-schneider-bombas.js"></script>
+
+  <!-- JAVASCRIPT LÓGICA DA APLICAÇÃO (carrinho, filtros, PDF, CSV de preços) -->
+  <script>
+    // Junta os produtos de todas as fontes cadastradas em data/ num único catálogo.
+    const products = [
+      ...PRODUTOS_AGROIRRIGA,
+      ...PRODUTOS_TIGRE_ASPERSAO,
+      ...PRODUTOS_TIGRE_IRRIGA_LF,
+      ...PRODUTOS_TIGRE_IRRIGA_EP_ES,
+      ...PRODUTOS_AGROPOLO,
+      ...PRODUTOS_TIGRE_PREDIAL_BOMBAS,
+      ...PRODUTOS_SCHNEIDER_BOMBAS,
+    ];
+
+    // Snapshot dos preços/rótulos originais (para o botão "Restaurar padrão")
+    const DEFAULT_PRICE_SNAPSHOT = products.map(p => ({
+      id: p.id,
+      diameters: p.diameters.map(d => ({ size: d.size, price: d.price }))
+    }));
+
+    // ESTADO DA APLICAÇÃO
+    let selectedDiameters = {}; // Armazena a seleção atual de variação para cada ID de produto
+    let cart = []; // Itens no orçamento
+    let activeModalProductId = null;
+    const CSV_STORAGE_KEY = 'agroirriga_price_overrides_v1';
+
+    // INICIALIZAÇÃO
+    window.addEventListener('DOMContentLoaded', () => {
+      products.forEach(p => {
+        selectedDiameters[p.id] = 0;
+      });
+      renderProducts(products);
+      updateCartUI();
+
+      // Fecha o menu de exportação ao clicar fora dele
+      document.addEventListener('click', (e) => {
+        const menu = document.getElementById('export-menu');
+        if (!menu || menu.classList.contains('hidden')) return;
+        if (!e.target.closest('#export-menu') && !e.target.closest('[onclick="toggleExportMenu()"]')) {
+          menu.classList.add('hidden');
+        }
+      });
+
+      // 1) Tenta sempre buscar o "precos.csv" mais recente ao lado do arquivo primeiro — só funciona
+      //    se a página estiver sendo servida por um servidor local (ex: Live Server do VS Code).
+      //    Se aberta com duplo-clique (file://), o navegador bloqueia isso e cai no catch abaixo.
+      //    "cache: no-store" garante que um simples F5 sempre pega a versão mais nova do arquivo.
+      fetch('precos.csv?t=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.ok ? r.text() : Promise.reject())
+        .then(text => {
+          const overrides = parseCSVText(text);
+          if (overrides.length) {
+            applyOverrides(overrides, false);
+            saveOverridesToStorage(overrides);
+            setCsvStatus('— preços carregados de precos.csv (atualiza a cada F5)');
+            renderProducts(products);
+          }
+        })
+        .catch(() => {
+          // 2) Sem servidor local: usa o último CSV carregado manualmente neste navegador, se houver.
+          const saved = loadOverridesFromStorage();
+          if (saved) {
+            applyOverrides(saved, false);
+            setCsvStatus('— preços carregados de CSV salvo neste navegador');
+            renderProducts(products);
+          }
+        });
+    });
+
+    // ===================== GERENCIAMENTO DE PREÇOS VIA CSV =====================
+
+    function setCsvStatus(text) {
+      const el = document.getElementById('csv-status');
+      if (el) el.textContent = text || '';
+    }
+
+    // Gera o texto CSV (ponto-e-vírgula) a partir do estado atual de "products"
+    function buildCsvString() {
+      const rows = [['id', 'produto', 'categoria', 'variante_index', 'variacao', 'preco'].join(';')];
+      products.forEach(p => {
+        p.diameters.forEach((d, idx) => {
+          const preco = d.price.toFixed(2).replace('.', ',');
+          rows.push([p.id, p.name, p.category, idx, d.size, preco].join(';'));
+        });
+      });
+      return '﻿' + rows.join('\r\n'); // BOM para acentuação correta no Excel
+    }
+
+    function downloadPriceCSV() {
+      const csv = buildCsvString();
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'precos.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('CSV de preços baixado! Edite a coluna "preco" e carregue de volta.');
+    }
+
+    // Faz o parse de um CSV ponto-e-vírgula simples (sem aspas), aceitando "," ou "." como decimal
+    function parseCSVText(text) {
+      const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length < 2) return [];
+      const header = lines[0].split(';').map(h => h.trim().toLowerCase());
+      const idIdx = header.indexOf('id');
+      const idxIdx = header.indexOf('variante_index');
+      const precoIdx = header.indexOf('preco');
+      const variacaoIdx = header.indexOf('variacao');
+      if (idIdx === -1 || idxIdx === -1 || precoIdx === -1) {
+        showToast('CSV inválido: colunas "id", "variante_index" e "preco" são obrigatórias.');
+        return [];
+      }
+      const overrides = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(';');
+        const id = parseInt(cols[idIdx], 10);
+        const variantIndex = parseInt(cols[idxIdx], 10);
+        const priceRaw = (cols[precoIdx] || '').trim().replace(',', '.');
+        const price = parseFloat(priceRaw);
+        if (isNaN(id) || isNaN(variantIndex) || isNaN(price)) continue;
+        overrides.push({ id, variantIndex, price, size: variacaoIdx !== -1 ? cols[variacaoIdx] : null });
+      }
+      return overrides;
+    }
+
+    // Aplica uma lista de overrides {id, variantIndex, price, size} ao array "products"
+    function applyOverrides(overrides, notify = true) {
+      let applied = 0;
+      overrides.forEach(ov => {
+        const product = products.find(p => p.id === ov.id);
+        if (!product || !product.diameters[ov.variantIndex]) return;
+        product.diameters[ov.variantIndex].price = round2(ov.price);
+        if (ov.size && ov.size.trim()) product.diameters[ov.variantIndex].size = ov.size.trim();
+        applied++;
+      });
+      if (notify) showToast(`${applied} preço(s) atualizado(s) a partir do CSV!`);
+      return applied;
+    }
+
+    function saveOverridesToStorage(overrides) {
+      try {
+        const compact = overrides.map(o => [o.id, o.variantIndex, o.price, o.size || '']);
+        localStorage.setItem(CSV_STORAGE_KEY, JSON.stringify(compact));
+      } catch (e) { /* localStorage indisponível: segue sem persistir */ }
+    }
+
+    function loadOverridesFromStorage() {
+      try {
+        const raw = localStorage.getItem(CSV_STORAGE_KEY);
+        if (!raw) return null;
+        const compact = JSON.parse(raw);
+        return compact.map(c => ({ id: c[0], variantIndex: c[1], price: c[2], size: c[3] }));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function handleCsvFileInput(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const overrides = parseCSVText(e.target.result);
+        if (overrides.length === 0) {
+          showToast('Nenhum preço válido encontrado no arquivo CSV.');
+          return;
+        }
+        applyOverrides(overrides, true);
+        saveOverridesToStorage(overrides);
+        setCsvStatus(`— carregado de "${file.name}"`);
+        filterProducts();
+        if (activeModalProductId) openProductModal(activeModalProductId);
+      };
+      reader.readAsText(file, 'UTF-8');
+      event.target.value = ''; // permite recarregar o mesmo arquivo depois de editá-lo novamente
+    }
+
+    function restoreDefaultPrices() {
+      DEFAULT_PRICE_SNAPSHOT.forEach(snap => {
+        const product = products.find(p => p.id === snap.id);
+        if (!product) return;
+        snap.diameters.forEach((d, idx) => {
+          product.diameters[idx].price = d.price;
+          product.diameters[idx].size = d.size;
+        });
+      });
+      try { localStorage.removeItem(CSV_STORAGE_KEY); } catch (e) {}
+      setCsvStatus('');
+      filterProducts();
+      if (activeModalProductId) openProductModal(activeModalProductId);
+      showToast('Preços restaurados para o padrão original.');
+    }
+
+    // RENDERIZAR GRID DE PRODUTOS
+    function renderProducts(items) {
+      const grid = document.getElementById('products-grid');
+      const noResults = document.getElementById('no-results');
+      const countLabel = document.getElementById('products-count');
+
+      countLabel.textContent = items.length;
+
+      if (items.length === 0) {
+        grid.innerHTML = '';
+        noResults.classList.remove('hidden');
+        return;
+      }
+
+      noResults.classList.add('hidden');
+
+      grid.innerHTML = items.map(product => {
+        const currentDiameterIdx = selectedDiameters[product.id] || 0;
+        const currentOption = product.diameters[currentDiameterIdx];
+
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group">
+
+            <!-- Imagem e Tag -->
+            <div>
+              <div class="relative h-44 product-photo overflow-hidden flex items-center justify-center p-3 cursor-pointer" onclick="openProductModal(${product.id})">
+                <span class="absolute top-2.5 left-2.5 bg-brand-100 text-brand-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-brand-200 z-10">
+                  ${product.category}
+                </span>
+                <img src="${product.image}" alt="${product.name}" class="h-full w-full object-contain group-hover:scale-105 transition-transform duration-500">
+                <div class="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span class="bg-white text-slate-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                    <i class="fa-solid fa-eye text-brand-600"></i> Ver Detalhes
+                  </span>
+                </div>
+              </div>
+
+              <!-- Conteúdo Card -->
+              <div class="p-4">
+                <h3 class="font-bold text-slate-800 text-sm line-clamp-2 hover:text-brand-600 cursor-pointer transition" onclick="openProductModal(${product.id})">
+                  ${product.name}
+                </h3>
+
+                <!-- SELEÇÃO DE VARIAÇÃO NO CARD -->
+                <div class="mt-3">
+                  <label class="text-[11px] text-slate-500 font-semibold uppercase tracking-wider block mb-1">
+                    <i class="fa-solid fa-ruler-horizontal text-brand-600 mr-1"></i> Variação:
+                  </label>
+                  <select onchange="changeDiameter(${product.id}, this.value)" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium">
+                    ${product.diameters.map((d, idx) => `
+                      <option value="${idx}" ${idx === currentDiameterIdx ? 'selected' : ''}>
+                        ${d.size} - R$ ${d.price.toFixed(2).replace('.', ',')}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preço e Botão Adicionar -->
+            <div class="p-4 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-slate-400 font-medium block">Preço estimado</span>
+                <span class="text-xl font-extrabold text-brand-700">
+                  R$ ${currentOption.price.toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+
+              <button onclick="addToCart(${product.id})" title="Adicionar ao Orçamento" class="bg-brand-50 hover:bg-brand-600 text-brand-700 hover:text-white border border-brand-200 hover:border-brand-600 p-2.5 rounded-xl transition-colors duration-200">
+                <i class="fa-solid fa-cart-plus text-base"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ALTERAR VARIAÇÃO
+    function changeDiameter(productId, diameterIndex) {
+      selectedDiameters[productId] = parseInt(diameterIndex);
+
+      if (activeModalProductId === productId) {
+        updateModalPrice(productId);
+      }
+
+      filterProducts();
+    }
+
+    // FILTRO E BUSCA
+    function filterProducts() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const category = document.getElementById('category-filter').value;
+      const sort = document.getElementById('sort-select').value;
+
+      let filtered = products.filter(product => {
+        const matchesQuery = product.name.toLowerCase().includes(query) ||
+                             product.category.toLowerCase().includes(query) ||
+                             product.description.toLowerCase().includes(query);
+        const matchesCat = category === 'all' || product.category === category;
+        return matchesQuery && matchesCat;
+      });
+
+      if (sort === 'price-asc') {
+        filtered.sort((a, b) => {
+          const priceA = a.diameters[selectedDiameters[a.id] || 0].price;
+          const priceB = b.diameters[selectedDiameters[b.id] || 0].price;
+          return priceA - priceB;
+        });
+      } else if (sort === 'price-desc') {
+        filtered.sort((a, b) => {
+          const priceA = a.diameters[selectedDiameters[a.id] || 0].price;
+          const priceB = b.diameters[selectedDiameters[b.id] || 0].price;
+          return priceB - priceA;
+        });
+      } else if (sort === 'name-asc') {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      renderProducts(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('category-filter').value = 'all';
+      document.getElementById('sort-select').value = 'default';
+      filterProducts();
+    }
+
+    // ABRIR MODAL DE DETALHES
+    function openProductModal(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      activeModalProductId = productId;
+
+      document.getElementById('modal-title').textContent = product.name;
+      document.getElementById('modal-category').textContent = product.category;
+      document.getElementById('modal-description').textContent = product.description;
+      document.getElementById('modal-material').textContent = product.material;
+      document.getElementById('modal-pressure').textContent = product.pressure;
+      document.getElementById('modal-image').src = product.image;
+
+      const diametersContainer = document.getElementById('modal-diameters');
+      const currentIdx = selectedDiameters[productId] || 0;
+
+      diametersContainer.innerHTML = product.diameters.map((d, idx) => `
+        <button onclick="selectModalDiameter(${product.id}, ${idx})" class="px-3 py-2 rounded-xl text-xs font-semibold border transition text-left ${idx === currentIdx ? 'bg-brand-600 text-white border-brand-600 shadow-sm' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'}">
+          ${d.size}
+        </button>
+      `).join('');
+
+      updateModalPrice(productId);
+
+      document.getElementById('modal-add-btn').onclick = () => {
+        addToCart(productId);
+        closeProductModal();
+      };
+
+      document.getElementById('product-modal').classList.remove('hidden');
+    }
+
+    function selectModalDiameter(productId, idx) {
+      changeDiameter(productId, idx);
+      openProductModal(productId);
+    }
+
+    function updateModalPrice(productId) {
+      const product = products.find(p => p.id === productId);
+      const currentIdx = selectedDiameters[productId] || 0;
+      const option = product.diameters[currentIdx];
+
+      document.getElementById('modal-price').textContent = `R$ ${option.price.toFixed(2).replace('.', ',')}`;
+    }
+
+    function closeProductModal() {
+      activeModalProductId = null;
+      document.getElementById('product-modal').classList.add('hidden');
+    }
+
+    // GERENCIAMENTO DO ORÇAMENTO / CARRINHO
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      const diameterIdx = selectedDiameters[productId] || 0;
+      const option = product.diameters[diameterIdx];
+
+      const itemKey = `${productId}-${option.size}`;
+      const existingItem = cart.find(item => item.key === itemKey);
+
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({
+          key: itemKey,
+          productId: product.id,
+          name: product.name,
+          category: product.category,
+          diameter: option.size,
+          price: option.price,
+          quantity: 1
+        });
+      }
+
+      updateCartUI();
+      showToast(`"<strong>${product.name}</strong>" adicionado ao orçamento!`);
+    }
+
+    function updateCartUI() {
+      const container = document.getElementById('cart-items-container');
+      const badge = document.getElementById('cart-badge');
+      const totalEl = document.getElementById('cart-total');
+
+      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+      badge.textContent = totalItems;
+
+      let totalValue = 0;
+
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-400">
+            <i class="fa-solid fa-basket-shopping text-4xl mb-3"></i>
+            <p class="text-sm font-medium">Seu orçamento está vazio.</p>
+            <p class="text-xs">Selecione peças e variações no catálogo.</p>
+          </div>
+        `;
+        totalEl.textContent = 'R$ 0,00';
+        return;
+      }
+
+      container.innerHTML = cart.map((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        totalValue += itemTotal;
+
+        return `
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between gap-3">
+            <div class="flex-1">
+              <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${item.name}</h4>
+              <p class="text-[11px] text-brand-700 font-semibold">${item.diameter}</p>
+              <p class="text-xs text-slate-500 font-bold mt-1">R$ ${item.price.toFixed(2).replace('.', ',')} un.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div class="flex items-center border border-slate-300 rounded-lg bg-white overflow-hidden">
+                <button onclick="updateQuantity(${index}, -1)" class="px-2 py-1 text-slate-600 hover:bg-slate-100 text-xs font-bold">-</button>
+                <span class="px-2 text-xs font-bold text-slate-700">${item.quantity}</span>
+                <button onclick="updateQuantity(${index}, 1)" class="px-2 py-1 text-slate-600 hover:bg-slate-100 text-xs font-bold">+</button>
+              </div>
+              <button onclick="removeItem(${index})" class="text-red-400 hover:text-red-600 p-1 text-sm" title="Remover">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      totalEl.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`;
+    }
+
+    function updateQuantity(index, delta) {
+      cart[index].quantity += delta;
+      if (cart[index].quantity <= 0) {
+        cart.splice(index, 1);
+      }
+      updateCartUI();
+    }
+
+    function removeItem(index) {
+      cart.splice(index, 1);
+      updateCartUI();
+    }
+
+    function clearCart() {
+      cart = [];
+      updateCartUI();
+    }
+
+    function toggleCartModal() {
+      const modal = document.getElementById('cart-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    // GERAÇÃO DO PDF DO ORÇAMENTO (jsPDF + AutoTable)
+    function generatePDF() {
+      if (cart.length === 0) {
+        showToast("Adicione itens para gerar o PDF do orçamento!");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const now = new Date();
+      const dataStr = now.toLocaleDateString('pt-BR');
+
+      doc.setFontSize(16);
+      doc.setTextColor(21, 128, 61);
+      doc.text("IrrigaTec Escola — Orçamento de Estudo", 14, 18);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Gerado em ${dataStr} — documento didático, sem valor comercial.`, 14, 25);
+
+      const rows = cart.map(item => {
+        const subtotal = item.price * item.quantity;
+        return [
+          item.name,
+          item.category,
+          item.diameter,
+          item.quantity,
+          `R$ ${item.price.toFixed(2).replace('.', ',')}`,
+          `R$ ${subtotal.toFixed(2).replace('.', ',')}`
+        ];
+      });
+
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      doc.autoTable({
+        startY: 32,
+        head: [["Peça", "Categoria", "Variação", "Qtd", "Preço Un.", "Subtotal"]],
+        body: rows,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [21, 128, 61] },
+        columnStyles: { 3: { halign: 'center' } }
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(12);
+      doc.setTextColor(21, 128, 61);
+      doc.text(`TOTAL ESTIMADO: R$ ${total.toFixed(2).replace('.', ',')}`, 14, finalY);
+
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text("Preços aproximados de mercado, atribuídos para fins didáticos. Não constitui cotação real.", 14, finalY + 8);
+
+      doc.save(`orcamento-irrigacao-${now.getTime()}.pdf`);
+      showToast("PDF do orçamento gerado com sucesso!");
+    }
+
+    function toggleExportMenu() {
+      document.getElementById('export-menu').classList.toggle('hidden');
+    }
+
+    // GERAÇÃO DA PLANILHA EXCEL DO ORÇAMENTO (SheetJS)
+    function generateXLS() {
+      if (cart.length === 0) {
+        showToast("Adicione itens para gerar a planilha do orçamento!");
+        return;
+      }
+
+      const now = new Date();
+      const rows = cart.map(item => ({
+        "Peça": item.name,
+        "Categoria": item.category,
+        "Variação": item.diameter,
+        "Quantidade": item.quantity,
+        "Preço Unitário (R$)": item.price,
+        "Subtotal (R$)": Math.round(item.price * item.quantity * 100) / 100
+      }));
+
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      rows.push({ "Peça": "", "Categoria": "", "Variação": "", "Quantidade": "", "Preço Unitário (R$)": "TOTAL ESTIMADO", "Subtotal (R$)": Math.round(total * 100) / 100 });
+
+      const sheet = XLSX.utils.json_to_sheet(rows);
+      sheet['!cols'] = [{ wch: 38 }, { wch: 22 }, { wch: 30 }, { wch: 10 }, { wch: 16 }, { wch: 14 }];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, sheet, "Orçamento");
+      XLSX.writeFile(workbook, `orcamento-irrigacao-${now.getTime()}.xlsx`);
+      showToast("Planilha Excel do orçamento gerada com sucesso!");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const msgEl = document.getElementById('toast-message');
+      msgEl.innerHTML = msg;
+
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+        toast.classList.remove('opacity-100');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
